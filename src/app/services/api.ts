@@ -1,6 +1,7 @@
 import { projectId, publicAnonKey } from '/utils/supabase/info';
 
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/elo-api-server`;
+// API_BASE agora usa a variável de ambiente configurada na Vercel
+const API_BASE = import.meta.env.VITE_API_URL;
 
 interface ApiOptions {
   method?: string;
@@ -11,14 +12,12 @@ interface ApiOptions {
 export async function apiCall(endpoint: string, options: ApiOptions = {}) {
   const { method = 'GET', body, requiresAuth = true } = options;
   
-  const headers: Record<string, string> = {}; // Removido Content-Type padrão
+  const headers: Record<string, string> = {};
 
-  // Adiciona Content-Type apenas se houver body e não for GET
   if (body && method !== 'GET') {
     headers['Content-Type'] = 'application/json';
   }
 
-  // Get token from localStorage
   if (requiresAuth) {
     const session = localStorage.getItem('elo_session');
     if (session) {
@@ -26,7 +25,8 @@ export async function apiCall(endpoint: string, options: ApiOptions = {}) {
       headers['Authorization'] = `Bearer ${access_token}`;
     }
   } else {
-    headers['Authorization'] = `Bearer ${publicAnonKey}`;
+    // Isso pode não ser mais necessário se o backend Deno gerencia a auth anônima
+    // headers['Authorization'] = `Bearer ${publicAnonKey}`; 
   }
 
   const config: RequestInit = {
@@ -79,6 +79,7 @@ export const authService = {
     
     return data;
   },
+  // ... (restante do authService)
 
   async signout() {
     localStorage.removeItem('elo_session');
@@ -106,7 +107,7 @@ export const profileService = {
   async getProfile() {
     return apiCall('/profile');
   },
-
+  // ... (restante do profileService, messageService, conversationService, discoverService)
   async updateProfile(updates: any) {
     return apiCall('/profile', {
       method: 'PUT',
